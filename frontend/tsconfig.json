@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2016",
+    "module": "ES2022",
+    "lib": ["ESNext", "DOM"],
+    "moduleResolution": "bundler",
+    "declaration": false,
+    "noImplicitAny": false,
+    "allowSyntheticDefaultImports": true,
+    "sourceMap": true,
+    "jsx": "react-jsx",
+    "noLib": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "types": [
+      "vitest/globals",
+      "@testing-library/dom",
+      "@testing-library/jest-dom"
+    ]
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}

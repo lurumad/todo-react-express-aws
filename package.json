@@ -1,0 +1,19 @@
+{
+  "name": "todos",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "clean": "npm run clean --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "dev": "npm-run-all --parallel dev:*",
+    "dev:frontend": "npm --workspace frontend run dev",
+    "dev:backend": "npm --workspace backend run dev",
+    "preview": "npm run preview --workspaces --if-present",
+    "test": "npm-run-all --parallel test:*",
+    "test:frontend": "npm --workspace frontend run test  --if-present",
+    "test:backend": "npm --workspace backend run test --if-present"
+  }
+}

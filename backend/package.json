@@ -1,0 +1,40 @@
+{
+  "name": "express-app",
+  "version": "1.0.0",
+  "main": "./dist/app.js",
+  "scripts": {
+    "build": "tsc",
+    "postinstall": "npm run build",
+    "dev": "tsx --env-file=.env ./src/app.ts",
+    "prestart": "npm run build",
+    "start": "ts-node ./dist/app.js",
+    "lint": "eslint . --ext .ts",
+    "lint-fix": "eslint . --ext .ts --fix",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "express-http-problem-details": "^0.2.1",
+    "google-auth-library": "^9.15.1",
+    "http-problem-details-mapper": "^0.1.7",
+    "tsx": "^4.19.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.6",
+    "@types/supertest": "^6.0.2",
+    "eslint": "^9.18.0",
+    "globals": "^15.14.0",
+    "nodemon": "^3.1.9",
+    "supertest": "^7.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^2.1.8"
+  }
+}
