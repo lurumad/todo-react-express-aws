@@ -5,6 +5,9 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as ecs_patterns from 'aws-cdk-lib/aws-ecs-patterns';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
+import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import { Construct } from 'constructs';
 import { ApplicationLoadBalancer } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import { Schedule } from 'aws-cdk-lib/aws-events';
@@ -68,6 +71,22 @@ export class Api extends Construct {
                             ],
                             effect: iam.Effect.ALLOW,
                             resources: ["*"],
+                        })],
+                    }),
+                    DynamoDBPolicy: new iam.PolicyDocument({
+                        statements: [new iam.PolicyStatement({
+                            effect: iam.Effect.ALLOW,
+                            actions: [
+                                'dynamodb:BatchGetItem',
+                                'dynamodb:BatchWriteItem',
+                                'dynamodb:PutItem',
+                                'dynamodb:GetItem',
+                                'dynamodb:Query',
+                                'dynamodb:Scan',
+                                'dynamodb:UpdateItem',
+                                'dynamodb:DeleteItem',
+                            ],
+                            resources: [props.table.tableArn, `${props.table.tableArn}/index/*`]
                         })],
                     }),
                 },
@@ -184,24 +203,14 @@ export class Api extends Construct {
     }
 
     private createApiGateway(props: ApiProps, service: ecs_patterns.ApplicationLoadBalancedFargateService) {
-        const api = new apigateway.RestApi(this, 'api-gateway', {
-            restApiName: 'Todo Service',
-            description: 'This service serves todos.'
+        const api = new apigatewayv2.HttpApi(this, 'TodosApi');
+
+        api.addRoutes({
+            path: '/{proxy+}',
+            methods: [apigatewayv2.HttpMethod.ANY],
+            integration: new integrations.HttpAlbIntegration('TodosAlbIntegration', service.listener)
         });
 
-        const todos = api.root.addResource('todos');
-
-        const listIntegration = new apigateway.HttpIntegration('http-integration', {
-            proxy: true,
-            options: {
-                connectionType: apigateway.ConnectionType.VPC_LINK,
-                integrationResponses: [
-                    {
-                        statusCode: '200'
-                    }
-                ]
-            }
-        });
     }
 }
 
@@ -211,6 +220,7 @@ export interface ApiProps {
     vpc: ec2.IVpc;
     ecr: EcrProps;
     ecsFargate: EcsFargateProps;
+    table: dynamodb.Table;
 }
 
 export class EcrProps {

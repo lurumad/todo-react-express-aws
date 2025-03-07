@@ -23,6 +23,7 @@ env:
   IMAGE: todo-backend
   IMAGE_TAG: latest
   SERVICE_NAME: todo-backend
+  DYNAMODB_TABLE: Todos
 
 jobs:
     changes:
@@ -88,6 +89,7 @@ jobs:
               env:
                 CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
                 CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
+                CDK_ECR_REPO_NAME: ${{ env.ECR_REPO_NAME }}
               run: |
                 cd infra
                 npx cdk deploy CoreStack --require-approval never
@@ -125,6 +127,11 @@ jobs:
                 cd infra
                 npx cdk bootstrap aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ env.AWS_REGION }}
             - name: CDK Deploy
+              env:
+                CDK_DYNAMODB_TABLE_NAME: ${{ env.DYNAMODB_TABLE }}
+                CDK_ECR_IMAGE_TAG: ${{ env.IMAGE_TAG }}
+                CDK_ECR_REPO_NAME: ${{ env.ECR_REPO_NAME }}
+                CDK_SERVICE_NAME: ${{ env.SERVICE_NAME }}
               run: |
                 cd infra
                 npx cdk deploy BackendStack --require-approval never
