@@ -53,7 +53,7 @@ jobs:
                     - 'infra/core/**'
     core-infra:
         needs: changes
-        if: ${{ needs.changes.outputs.core-infra == 'true' }}
+        if: ${{ needs.changes.outputs.core-infra == 'true' || inputs.job_to_run == 'core-infra' }}
         name: Deploy Core Infrastructure
         runs-on: ubuntu-latest
 
@@ -93,7 +93,7 @@ jobs:
                 npx cdk deploy CoreStack --require-approval never
     backend-infra:
         needs: changes
-        if: ${{ needs.changes.outputs.backend-infra == 'true' }}
+        if: ${{ needs.changes.outputs.backend-infra == 'true' || inputs.job_to_run == 'backend-infra' }}
         name: Deploy Backend Infrastructure
         runs-on: ubuntu-latest
 
@@ -135,7 +135,7 @@ jobs:
                 npx cdk deploy BackendStack --require-approval never
     backend:
         needs: changes
-        if: ${{ needs.changes.outputs.backend == 'true' }}
+        if: ${{ needs.changes.outputs.backend == 'true'|| inputs.job_to_run == 'backend'  }}
         runs-on: ubuntu-latest
         name: Build and push Docker image
 
@@ -181,7 +181,7 @@ jobs:
                 IMAGE_TAG: ${{ env.IMAGE_TAG }}
 
               run: |
-                docker build "${{ inputs.docker_build_dir }}" -f "${{ inputs.path_to_dockerfile }}" -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+                docker build "backend/" -f "backend/Dockerfile" -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
                 docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
                 echo "IMAGE $IMAGE_TAG is pushed to $ECR_REGISTRY/$ECR_REPOSITORY"
                 echo "image_tag=$IMAGE_TAG" 

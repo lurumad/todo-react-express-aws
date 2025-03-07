@@ -10,6 +10,11 @@ export class CoreStack extends cdk.Stack {
         const repo = new ecr.Repository(this, props.name, {
             repositoryName: props.name,
             imageScanOnPush: true,
+            lifecycleRules: [
+                {
+                    maxImageCount: 3,
+                },
+            ]
         });
 
         repo.grantPull(new iam.AccountPrincipal(props.accountId));
