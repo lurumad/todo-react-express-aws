@@ -4,7 +4,7 @@ import express from "express";
 import request from "supertest";
 import { todoController } from "./todo.controller";
 import { TodoStatus } from "@/domain/entities/model";
-import { InMemoryTodoRepository } from "@/infrastructure/repositories/InMemoryTodoRepository";
+import { InMemoryTodoRepository } from "@/infrastructure/repositories/todo.repositories.inmemory";
 
 const app = express();
 appSetup(app);

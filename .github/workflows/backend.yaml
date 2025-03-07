@@ -1,0 +1,243 @@
+name: Todo Backend CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+        job_to_run:
+            description: "Job to run"
+            required: true
+            default: "deploy"
+            type: choice
+            options:
+            - destroy
+            - core-infra
+            - backend-infra
+            - backend
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPO_NAME: todo-backend
+  IMAGE: todo-backend
+  IMAGE_TAG: latest
+  SERVICE_NAME: todo-backend
+
+jobs:
+    changes:
+        runs-on: ubuntu-latest
+        permissions:
+            pull-requests: read
+        outputs:
+            backend: ${{ steps.filter.outputs.backend }}
+            frontend: ${{ steps.filter.outputs.frontend }}
+        steps:
+        - uses: dorny/paths-filter@v3
+          id: filter
+          with:
+            filters: |
+                backend:
+                    - 'backend/**'
+                frontend:
+                    - 'frontend/**'
+                backend-infra:
+                    - 'infra/backend/**'
+                frontend-infra:
+                    - 'infra/frontend/**'
+                core-infra:
+                    - 'infra/core/**'
+    core-infra:
+        needs: changes
+        if: ${{ needs.changes.outputs.core-infra == 'true' }}
+        name: Deploy Core Infrastructure
+        runs-on: ubuntu-latest
+
+        permissions:
+            id-token: write
+            contents: write
+
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/setup-node@v3
+              with:
+                node-version: "22.14.0"
+            - name: Set up AWS CLI
+              run: |
+                sudo apt-get update
+                sudo apt-get install -y awscli
+                aws --version
+            - name: Install AWS CDK
+              run: |
+                npm install -g aws-cdk
+                cdk --version
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                aws-region: ${{ env.AWS_REGION }}
+                role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+                role-session-name: GithubActionsSession
+            - name: Install dependencies
+              run: |
+                cd infra
+                npm install
+            - name: CDK Bootstrap
+              run: |
+                cd infra
+                npx cdk bootstrap aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ env.AWS_REGION }}
+            - name: CDK Deploy
+              env:
+                CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
+                CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
+              run: |
+                cd infra
+                npx cdk deploy CoreStack --require-approval never
+    backend-infra:
+        needs: changes
+        if: ${{ needs.changes.outputs.backend-infra == 'true' }}
+        name: Deploy Backend Infrastructure
+        runs-on: ubuntu-latest
+
+        permissions:
+            id-token: write
+            contents: write
+
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/setup-node@v3
+              with:
+                node-version: "22.14.0"
+            - name: Set up AWS CLI
+              run: |
+                sudo apt-get update
+                sudo apt-get install -y awscli
+                aws --version
+            - name: Install AWS CDK
+              run: |
+                npm install -g aws-cdk
+                cdk --version
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                aws-region: ${{ env.AWS_REGION }}
+                role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+                role-session-name: GithubActionsSession
+            - name: Install dependencies
+              run: |
+                cd infra
+                npm install
+            - name: CDK Bootstrap
+              run: |
+                cd infra
+                npx cdk bootstrap aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ env.AWS_REGION }}
+            - name: CDK Deploy
+              run: |
+                cd infra
+                npx cdk deploy BackendStack --require-approval never
+    backend:
+        needs: changes
+        if: ${{ needs.changes.outputs.backend == 'true' }}
+        runs-on: ubuntu-latest
+        name: Build and push Docker image
+
+        permissions:
+            id-token: write
+            contents: read
+
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/setup-node@v3
+              with:
+                node-version: "22.14.0"
+            - name: Install dependencies
+              run: |
+                cd backend
+                npm install
+            - name: Run tests
+              run: |
+                cd backend
+                npm test
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                aws-region: ${{ env.AWS_REGION }}
+                role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+                role-session-name: GithubActionsSession
+            - name: Build Docker image
+              run: |
+                cd backend
+                docker build -t todo-backend .
+            - name: Login to Amazon ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v2
+              with:
+                registries: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+
+            - name: Build, tag, and push image to Amazon ECR
+              id: build-publish
+              shell: bash
+              env:
+                ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+                ECR_REPOSITORY: ${{ env.ECR_REPO_NAME }}
+                IMAGE_TAG: ${{ env.IMAGE_TAG }}
+
+              run: |
+                docker build "${{ inputs.docker_build_dir }}" -f "${{ inputs.path_to_dockerfile }}" -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+                docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+                echo "IMAGE $IMAGE_TAG is pushed to $ECR_REGISTRY/$ECR_REPOSITORY"
+                echo "image_tag=$IMAGE_TAG" 
+                echo "full_image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
+            - name: Blue/Green Deployment
+              env:
+                IMAGE: ${{ env.IMAGE }}
+                IMAGE_TAG: ${{ env.IMAGE_TAG }}
+                SERVICE_NAME: ${{ env.SERVICE_NAME }}
+                PORT: 80
+              run: |
+                TAG="$IMAGE_TAG"
+                FULL_IMAGE="${IMAGE}:${TAG}"
+                echo "Image is ${FULL_IMAGE}"
+
+                TASK_PREFIX=$(aws ecs describe-services --services ${SERVICE_NAME} --cluster ${SERVICE_NAME}-Cluster --query 'services[-1].taskDefinition' | tr -d '"')
+                TASK_PREFIX=$(echo "$TASK_PREFIX" | sed 's/.*\///' | sed "s/:.*//g")
+
+                LATEST_TASK=$(aws ecs list-task-definitions --family-prefix $TASK_PREFIX --query 'taskDefinitionArns[-1]' | tr -d '"')
+                echo "LATEST TASK: ${LATEST_TASK}"
+
+                DEFS=$(aws ecs describe-task-definition --task-definition "${LATEST_TASK}" --query 'taskDefinition')
+                echo "DEFS: ${DEFS}"
+
+                INDEX=$(echo "${DEFS}" | jq '[ .containerDefinitions[].image | startswith("'$IMAGE':") ] | index(true)')
+
+                NEW_DEFS=$(echo "${DEFS}" | jq 'del(.taskDefinitionArn, .revision, .registeredAt, .registeredBy, .status, .requiresAttributes, .compatibilities)' | jq '.containerDefinitions['$INDEX'].image="'$FULL_IMAGE'"')
+                echo "NEW_DEFS: ${NEW_DEFS}"
+
+                NEW_TASK=$(aws ecs register-task-definition --cli-input-json "${NEW_DEFS}" --query 'taskDefinition.taskDefinitionArn' | tr -d '"')
+                echo "NEW TASK: ${NEW_TASK}"
+
+                SPEC='{\"version\": 0.0,\"Resources\":[{\"TargetService\":{\"Type\":\"AWS::ECS::Service\",\"Properties\":{\"TaskDefinition\":\"'$NEW_TASK'\",\"LoadBalancerInfo\": {\"ContainerName\":\"web\",\"ContainerPort\":'$PORT'}}}}],\"Hooks\":[]}'
+
+                REV='{"revisionType": "AppSpecContent", "appSpecContent": {"content":"'${SPEC}'"}}'
+                ID=$(aws deploy create-deployment \
+                    --application-name "${SERVICE_NAME}-${AWS_REGION}-deployment-app" \
+                    --deployment-group-name "${SERVICE_NAME}-${AWS_REGION}-deployment-group" \
+                    --revision "${REV}" --region "${AWS_REGION}" --output text --query '[deploymentId]')
+
+                STATUS=$(aws deploy get-deployment --deployment-id "${ID}" --output text --query '[deploymentInfo.status]')
+
+                while [[ "${STATUS}" == "Created" || "${STATUS}" == "InProgress" || "${STATUS}" == "Pending" || "${STATUS}" == "Queued" || $STATUS == "Ready" ]]; do
+                echo "Status: ${STATUS}..."
+                STATUS=$(aws deploy get-deployment --deployment-id "${ID}" --output text --query '[deploymentInfo.status]')
+                sleep 5
+                done
+
+                if [[ "${STATUS}" == "Succeeded" ]]; then
+                EXITCODE=0
+                echo "Deployment finished!"
+                else
+                EXITCODE=1
+                echo "Deployment failed!"
+                fi
+
+                aws deploy get-deployment --deployment-id "${ID}"
+                exit "${EXITCODE}"

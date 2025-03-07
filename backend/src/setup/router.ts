@@ -1,5 +1,6 @@
 import { todoController } from "@/application/controllers/todo.controller";
-import { InMemoryTodoRepository } from "@/infrastructure/repositories/InMemoryTodoRepository";
+import { DynamoDbTodoRepository } from "@/infrastructure/repositories/todo.repositories.dynamodb";
+import { InMemoryTodoRepository } from "@/infrastructure/repositories/todo.repositories.inmemory";
 import { Express } from "express";
 
 export const routerSetup = (app: Express) => {
@@ -7,5 +8,5 @@ export const routerSetup = (app: Express) => {
     res.status(200).send("pong");
   });
 
-  todoController(app, new InMemoryTodoRepository());
+  todoController(app, new DynamoDbTodoRepository());
 };
