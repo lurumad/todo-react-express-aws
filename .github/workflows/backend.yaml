@@ -32,6 +32,9 @@ jobs:
         outputs:
             backend: ${{ steps.filter.outputs.backend }}
             frontend: ${{ steps.filter.outputs.frontend }}
+            backend-infra: ${{ steps.filter.outputs.backend-infra }}
+            frontend-infra: ${{ steps.filter.outputs.frontend-infra }}
+            core-infra: ${{ steps.filter.outputs.core-infra }}
         steps:
         - uses: actions/checkout@v3
         - uses: dorny/paths-filter@v3

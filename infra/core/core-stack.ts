@@ -11,6 +11,7 @@ export class CoreStack extends cdk.Stack {
             repositoryName: props.name,
             imageScanOnPush: true,
         });
+
         repo.grantPull(new iam.AccountPrincipal(props.accountId));
     }
 }
