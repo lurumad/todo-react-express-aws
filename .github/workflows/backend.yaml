@@ -22,7 +22,7 @@ env:
   ECR_REPO_NAME: todo-backend
   IMAGE: todo-backend
   IMAGE_TAG: latest
-  SERVICE_NAME: todo-backend
+  SERVICE_NAME: Todos
   DYNAMODB_TABLE: Todos
 
 jobs:

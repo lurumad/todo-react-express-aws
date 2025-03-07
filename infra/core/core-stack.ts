@@ -7,7 +7,7 @@ export class CoreStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: CoreStackProps) {
         super(scope, id, props);
 
-        const repo = new ecr.Repository(this, props.name, {
+        const repo = new ecr.Repository(this, 'TodosEcr', {
             repositoryName: props.name,
             imageScanOnPush: true,
             lifecycleRules: [

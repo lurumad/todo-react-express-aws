@@ -7,7 +7,7 @@ export class Networking extends Construct {
     constructor(scope: Construct, id: string) {
         super(scope, id);
 
-        this.vpc = new ec2.Vpc(this, 'vpc', {
+        this.vpc = new ec2.Vpc(this, 'TodosVpc', {
             maxAzs: 2,
             natGateways: 1,
             subnetConfiguration: [

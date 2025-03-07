@@ -4,7 +4,6 @@ import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as ecs_patterns from 'aws-cdk-lib/aws-ecs-patterns';
-import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
