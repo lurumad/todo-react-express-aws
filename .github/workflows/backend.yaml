@@ -66,11 +66,6 @@ jobs:
             - uses: actions/setup-node@v3
               with:
                 node-version: "22.14.0"
-            - name: Set up AWS CLI
-              run: |
-                sudo apt-get update
-                sudo apt-get install -y awscli
-                aws --version
             - name: Install AWS CDK
               run: |
                 npm install -g aws-cdk
