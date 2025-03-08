@@ -1,3 +1,4 @@
+import * as cdk from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
@@ -8,7 +9,7 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import { Construct } from 'constructs';
-import { ApplicationLoadBalancer } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import { ApplicationLoadBalancer, Protocol } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import { Schedule } from 'aws-cdk-lib/aws-events';
 
 export class Api extends Construct {
@@ -150,6 +151,16 @@ export class Api extends Construct {
                 },
             }
         );
+
+        albApplication.targetGroup.configureHealthCheck({
+            enabled: true,
+            timeout: cdk.Duration.seconds(5),
+            path: "/ping",
+            interval: cdk.Duration.seconds(30),
+            unhealthyThresholdCount: 2,
+            healthyThresholdCount: 5,
+            protocol: Protocol.HTTP,
+        });
 
         albApplication.service.taskDefinition.defaultContainer?.addUlimits({
             name: ecs.UlimitName.NOFILE,
