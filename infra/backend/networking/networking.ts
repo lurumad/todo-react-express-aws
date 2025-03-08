@@ -9,7 +9,6 @@ export class Networking extends Construct {
 
         this.vpc = new ec2.Vpc(this, 'TodosVpc', {
             maxAzs: 2,
-            natGateways: 1,
             subnetConfiguration: [
                 {
                     name: 'PublicSubnet',
@@ -22,7 +21,6 @@ export class Networking extends Construct {
                     cidrMask: 24,
                 }
             ],
-            restrictDefaultSecurityGroup: false,
         });
     }
 }

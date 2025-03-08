@@ -33,7 +33,7 @@ export class BackendStack extends cdk.Stack {
                 containerConfiguration: {
                     externalListenerPort: 80,
                     containerPort: 3001,
-                    cpu: 512,
+                    cpu: 256,
                     memoryLimitMiB: 512,
                     desiredInstances: 1,
                 },
