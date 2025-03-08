@@ -1,12 +1,12 @@
 import express from "express";
 import request from "supertest";
-import { routerSetup } from "./router";
+import { routerContollersSetup } from "./router.controllers";
 
 describe("routerSetup", async () => {
   it("returns pong", async () => {
     const app = express();
 
-    routerSetup(app);
+    routerContollersSetup(app);
 
     await request(app)
       .get("/ping")

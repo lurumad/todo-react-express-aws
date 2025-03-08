@@ -25,9 +25,6 @@ const strategy = new DefaultMappingStrategy(
 );
 
 export const middlewaresSetup = (app: Express) => {
-  app.get("/ping", (req, res) => {
-    res.status(200).send("pong");
-  });
   app.use(cors({
     origin: "http://localhost:3000",
     methods: ["GET", "POST", "PUT", "DELETE"],

@@ -3,8 +3,6 @@ import { DynamoDbTodoRepository } from "@/infrastructure/repositories/todo.repos
 import { InMemoryTodoRepository } from "@/infrastructure/repositories/todo.repositories.inmemory";
 import { Express } from "express";
 
-export const routerSetup = (app: Express) => {
-  app.get("/ping", (req, res) => {
-    res.status(200).send("pong");
-  });
+export const routerContollersSetup = (app: Express) => {
+  todoController(app, new DynamoDbTodoRepository());
 };
