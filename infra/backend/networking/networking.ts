@@ -21,6 +21,7 @@ export class Networking extends Construct {
                     cidrMask: 24,
                 }
             ],
+            restrictDefaultSecurityGroup: true,
         });
     }
 }
