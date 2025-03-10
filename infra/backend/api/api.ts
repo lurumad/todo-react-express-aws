@@ -228,29 +228,6 @@ export class Api extends Construct {
                 vpcLink: vpcLink,
             }),
         });
-
-
-        const logGroup = new logs.LogGroup(this, 'ApiGatewayLogs', {
-            retention: logs.RetentionDays.ONE_WEEK,
-        });
-
-        const stage = new apigatewayv2.CfnStage(this, 'TodosApiStage', {
-            apiId: api.apiId,
-            stageName: 'production',
-            autoDeploy: true,
-            accessLogSettings: {
-                destinationArn: logGroup.logGroupArn,
-                format: JSON.stringify({
-                    requestId: "$context.requestId",
-                    ip: "$context.identity.sourceIp",
-                    requestTime: "$context.requestTime",
-                    httpMethod: "$context.httpMethod",
-                    path: "$context.path",
-                    status: "$context.status",
-                    responseLength: "$context.responseLength"
-                }),
-            },
-        });
     }
 }
 
