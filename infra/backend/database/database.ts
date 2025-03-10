@@ -9,7 +9,8 @@ export class Database extends Construct {
 
         this.table = new ddb.Table(this, 'TodosTable', {
             tableName: props.tableName,
-            partitionKey: { name: 'id', type: ddb.AttributeType.STRING },
+            partitionKey: { name: 'userId', type: ddb.AttributeType.STRING },
+            sortKey: { name: 'id', type: ddb.AttributeType.STRING },
             billingMode: ddb.BillingMode.PAY_PER_REQUEST,
             encryption: ddb.TableEncryption.AWS_MANAGED,
         });
