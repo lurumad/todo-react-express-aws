@@ -218,9 +218,13 @@ export class Api extends Construct {
         api.addRoutes({
             path: '/{proxy+}',
             methods: [apigatewayv2.HttpMethod.ANY],
-            integration: new integrations.HttpAlbIntegration('TodosAlbIntegration', service.listener)
+            integration: new integrations.HttpAlbIntegration('TodosAlbIntegration', service.listener),
         });
 
+        api.addStage('TodosApiStage', {
+            stageName: 'prod',
+            autoDeploy: true,
+        });
     }
 }
 
