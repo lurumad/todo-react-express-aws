@@ -5,7 +5,6 @@ import { middlewaresSetup } from "./setup/middlewares";
 import { routerSetup } from "./setup/router";
 
 const app = express();
-
 routerSetup(app);
 middlewaresSetup(app);
 appSetup(app);
