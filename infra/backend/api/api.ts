@@ -215,15 +215,41 @@ export class Api extends Construct {
     private createApiGateway(props: ApiProps, service: ecs_patterns.ApplicationLoadBalancedFargateService) {
         const api = new apigatewayv2.HttpApi(this, 'TodosApi');
 
+        const vpcLink = api.addVpcLink({
+            vpcLinkName: 'TodosVpcLink',
+            vpc: props.vpc,
+            securityGroups: service.service.connections.securityGroups,
+        });
+
         api.addRoutes({
             path: '/{proxy+}',
             methods: [apigatewayv2.HttpMethod.ANY],
-            integration: new integrations.HttpAlbIntegration('TodosAlbIntegration', service.listener),
+            integration: new integrations.HttpAlbIntegration('TodosAlbIntegration', service.listener, {
+                vpcLink: vpcLink,
+            }),
         });
 
-        api.addStage('TodosApiStage', {
+
+        const logGroup = new logs.LogGroup(this, 'ApiGatewayLogs', {
+            retention: logs.RetentionDays.ONE_WEEK,
+        });
+
+        const stage = new apigatewayv2.CfnStage(this, 'TodosApiStage', {
+            apiId: api.apiId,
             stageName: 'prod',
             autoDeploy: true,
+            accessLogSettings: {
+                destinationArn: logGroup.logGroupArn,
+                format: JSON.stringify({
+                    requestId: "$context.requestId",
+                    ip: "$context.identity.sourceIp",
+                    requestTime: "$context.requestTime",
+                    httpMethod: "$context.httpMethod",
+                    path: "$context.path",
+                    status: "$context.status",
+                    responseLength: "$context.responseLength"
+                }),
+            },
         });
     }
 }
