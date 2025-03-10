@@ -41,7 +41,7 @@ export class BackendStack extends cdk.Stack {
                 environmentVariables: {
                     NODE_ENV: 'production',
                     PORT: '3001',
-                    TABLE_NAME: props.tableName,
+                    TODOS_TABLE: props.tableName,
                     AWS_REGION: this.region,
                 },
                 logRetention: logs.RetentionDays.ONE_DAY
