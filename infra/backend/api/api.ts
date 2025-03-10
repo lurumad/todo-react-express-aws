@@ -236,7 +236,7 @@ export class Api extends Construct {
 
         const stage = new apigatewayv2.CfnStage(this, 'TodosApiStage', {
             apiId: api.apiId,
-            stageName: 'prod',
+            stageName: 'production',
             autoDeploy: true,
             accessLogSettings: {
                 destinationArn: logGroup.logGroupArn,
