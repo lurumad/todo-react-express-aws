@@ -12,7 +12,7 @@ export class CoreStack extends cdk.Stack {
             imageScanOnPush: true,
             lifecycleRules: [
                 {
-                    maxImageCount: 3,
+                    maxImageCount: 1,
                 },
             ]
         });
