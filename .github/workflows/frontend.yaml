@@ -18,7 +18,7 @@ on:
 env:
   AWS_REGION: us-east-1
   ASSETS_BUCKET_NAME: todos-oacbucket
-  CDK_SERVICE_NAME: Todos
+  SERVICE_NAME: Todos
 
 jobs:
   changes:
@@ -102,7 +102,7 @@ jobs:
         env:
           CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
           CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
-          SERVICE_NAME: ${{ env.SERVICE_NAME }}
+          CDK_SERVICE_NAME: ${{ env.SERVICE_NAME }}
         run: |
           cd infra
           npx cdk deploy FrontendStack --require-approval never
