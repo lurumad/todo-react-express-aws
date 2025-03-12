@@ -196,7 +196,7 @@ jobs:
                 DEFS=$(aws ecs describe-task-definition --task-definition "${LATEST_TASK}" --query 'taskDefinition')
                 echo "DEFS: ${DEFS}"
 
-                INDEX=$(echo "${DEFS}" | jq '[ .containerDefinitions[].image | startswith("'$IMAGE':") ] | index(true)')
+                INDEX=$(echo "${DEFS}" | jq -r '.containerDefinitions | map(.image | endswith("'$IMAGE'")) | index(true)')
 
                 NEW_DEFS=$(echo "${DEFS}" | jq 'del(.taskDefinitionArn, .revision, .registeredAt, .registeredBy, .status, .requiresAttributes, .compatibilities)' | jq '.containerDefinitions['$INDEX'].image="'$FULL_IMAGE'"')
                 echo "NEW_DEFS: ${NEW_DEFS}"

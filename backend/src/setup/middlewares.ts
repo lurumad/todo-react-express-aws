@@ -49,7 +49,7 @@ const verifyGoogleToken = async (req: Request, res: Response, next: NextFunction
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res.status(401).json({ error: "No token provided." });
+    res.status(401).json({ error: "No token provided" });
     return
   }
 
@@ -59,18 +59,23 @@ const verifyGoogleToken = async (req: Request, res: Response, next: NextFunction
     const info = await client.getTokenInfo(token);
 
     if (!info.email_verified) {
-      res.status(401).json({ error: "Email not verified." });
+      res.status(401).json({ error: "Email not verified" });
+      return;
+    }
+
+    if (!info.sub) {
+      res.status(401).json({ error: "Invalid token" });
       return;
     }
 
     req.user = {
-      userId: info.sub!!,
+      userId: info.sub,
       email: info.email,
     };
 
     next();
   } catch (error) {
     console.error("Error verifying Google token:", error);
-    res.status(401).json({ error: "Invalid token." });
+    res.status(401).json({ error: "Invalid token" });
   }
 };
