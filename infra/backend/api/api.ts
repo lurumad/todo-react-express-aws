@@ -104,7 +104,7 @@ export class Api extends Construct {
                     : true,
         });
 
-        const loadBalancer = new ApplicationLoadBalancer(scope, `${props.serviceName}-alb`, {
+        const loadBalancer = new elbv2.ApplicationLoadBalancer(scope, `${props.serviceName}-alb`, {
             vpc: props.vpc,
             crossZoneEnabled: true,
             internetFacing: false,
@@ -161,7 +161,7 @@ export class Api extends Construct {
             interval: cdk.Duration.seconds(30),
             unhealthyThresholdCount: 2,
             healthyThresholdCount: 5,
-            protocol: Protocol.HTTP,
+            protocol: elbv2.Protocol.HTTP,
         });
 
         albApplication.service.taskDefinition.defaultContainer?.addUlimits({
