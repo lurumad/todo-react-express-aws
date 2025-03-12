@@ -18,7 +18,7 @@ on:
 env:
   AWS_REGION: us-east-1
   ASSETS_BUCKET_NAME: todos-oacbucket
-  SERVICE_NAME: Todos
+  CDK_SERVICE_NAME: Todos
 
 jobs:
   deploy:
