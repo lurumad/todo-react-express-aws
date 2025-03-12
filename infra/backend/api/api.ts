@@ -245,6 +245,16 @@ export class Api extends Construct {
             targetType: elbv2.TargetType.IP,
         });
 
+        greenTG.configureHealthCheck({
+            enabled: true,
+            timeout: cdk.Duration.seconds(5),
+            path: "/ping",
+            interval: cdk.Duration.seconds(30),
+            unhealthyThresholdCount: 2,
+            healthyThresholdCount: 5,
+            protocol: elbv2.Protocol.HTTP,
+        });
+
         const testListener = new elbv2.ApplicationListener(scope, `${props.serviceName}-test-listener`, {
             loadBalancer: service.loadBalancer,
             port: 8080,
