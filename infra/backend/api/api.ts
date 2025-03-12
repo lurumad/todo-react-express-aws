@@ -4,12 +4,13 @@ import * as ecr from 'aws-cdk-lib/aws-ecr';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as logs from "aws-cdk-lib/aws-logs";
+import * as codedeploy from "aws-cdk-lib/aws-codedeploy";
 import * as ecs_patterns from 'aws-cdk-lib/aws-ecs-patterns';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import { Construct } from 'constructs';
-import { ApplicationLoadBalancer, Protocol } from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import { Schedule } from 'aws-cdk-lib/aws-events';
 
 export class Api extends Construct {
@@ -18,6 +19,7 @@ export class Api extends Construct {
 
         const service = this.createEcsFaragate(scope, props);
         this.createApiGateway(props, service);
+        this.createDeployment(scope, props, service);
     }
 
     private createEcsFaragate(scope: Construct, props: ApiProps): ecs_patterns.ApplicationLoadBalancedFargateService {
@@ -228,6 +230,43 @@ export class Api extends Construct {
                 vpcLink: vpcLink,
             }),
         });
+    }
+
+    private createDeployment(scope: Construct, props: ApiProps, service: ecs_patterns.ApplicationLoadBalancedFargateService) {
+        const application = new codedeploy.EcsApplication(scope, `${props.serviceName}-deployment-app`, {
+            applicationName: `${props.serviceName}-deployment-app`,
+        });
+
+        const greenTG = new elbv2.ApplicationTargetGroup(scope, `${props.serviceName}-green-tg`, {
+            targetGroupName: `${props.serviceName}-green-tg`,
+            port: props.ecsFargate.containerConfiguration.containerPort,
+            vpc: props.vpc,
+            protocol: elbv2.ApplicationProtocol.HTTP,
+            targetType: elbv2.TargetType.IP,
+        });
+
+        const testListener = new elbv2.ApplicationListener(scope, `${props.serviceName}-test-listener`, {
+            loadBalancer: service.loadBalancer,
+            port: 8080,
+            protocol: elbv2.ApplicationProtocol.HTTP,
+            defaultTargetGroups: [service.targetGroup],
+        });
+
+        const deploymentGroup = new codedeploy.EcsDeploymentGroup(scope, `${props.serviceName}-deployment-group`, {
+            application: application,
+            deploymentGroupName: `${props.serviceName}-deployment-group`,
+            service: service.service,
+            deploymentConfig: codedeploy.EcsDeploymentConfig.CANARY_10PERCENT_5MINUTES,
+            blueGreenDeploymentConfig: {
+                blueTargetGroup: service.targetGroup,
+                greenTargetGroup: greenTG,
+                listener: service.listener,
+                testListener: testListener,
+                terminationWaitTime: cdk.Duration.seconds(60)
+            },
+        });
+
+        return deploymentGroup;
     }
 }
 
