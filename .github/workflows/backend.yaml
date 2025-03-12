@@ -181,10 +181,11 @@ jobs:
                 IMAGE: ${{ env.IMAGE }}
                 IMAGE_TAG: ${{ env.IMAGE_TAG }}
                 SERVICE_NAME: ${{ env.SERVICE_NAME }}
-                PORT: 80
+                AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+                PORT: 3001
               run: |
                 TAG="$IMAGE_TAG"
-                FULL_IMAGE="${IMAGE}:${TAG}"
+                FULL_IMAGE="${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/${IMAGE}:${TAG}"
                 echo "Image is ${FULL_IMAGE}"
 
                 TASK_PREFIX=$(aws ecs describe-services --services ${SERVICE_NAME} --cluster ${SERVICE_NAME}-Cluster --query 'services[-1].taskDefinition' | tr -d '"')
@@ -196,7 +197,7 @@ jobs:
                 DEFS=$(aws ecs describe-task-definition --task-definition "${LATEST_TASK}" --query 'taskDefinition')
                 echo "DEFS: ${DEFS}"
 
-                INDEX=$(echo "${DEFS}" | jq -r '.containerDefinitions | map(.image | endswith("'$IMAGE'")) | index(true)')
+                INDEX=$(echo "${DEFS}" | jq '[ .containerDefinitions[].image | startswith("'$IMAGE':") ] | index(true)')
 
                 NEW_DEFS=$(echo "${DEFS}" | jq 'del(.taskDefinitionArn, .revision, .registeredAt, .registeredBy, .status, .requiresAttributes, .compatibilities)' | jq '.containerDefinitions['$INDEX'].image="'$FULL_IMAGE'"')
                 echo "NEW_DEFS: ${NEW_DEFS}"
@@ -208,8 +209,8 @@ jobs:
 
                 REV='{"revisionType": "AppSpecContent", "appSpecContent": {"content":"'${SPEC}'"}}'
                 ID=$(aws deploy create-deployment \
-                    --application-name "${SERVICE_NAME}-${AWS_REGION}-deployment-app" \
-                    --deployment-group-name "${SERVICE_NAME}-${AWS_REGION}-deployment-group" \
+                    --application-name "${SERVICE_NAME}-deployment-app" \
+                    --deployment-group-name "${SERVICE_NAME}-deployment-group" \
                     --revision "${REV}" --region "${AWS_REGION}" --output text --query '[deploymentId]')
 
                 STATUS=$(aws deploy get-deployment --deployment-id "${ID}" --output text --query '[deploymentInfo.status]')
