@@ -1,5 +1,4 @@
-import { Express, json } from "express";
-import cors from "cors";
+import { Express } from "express";
 
 export const appSetup = (app: Express) => {
   try {

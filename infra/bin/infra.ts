@@ -2,6 +2,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { CoreStack } from '../core/core-stack';
 import { BackendStack } from '../backend/backend-stack';
+import { FrontendStack } from '../frontend/frontend-stack';
 
 const app = new cdk.App();
 
@@ -23,3 +24,5 @@ new BackendStack(app, 'BackendStack', {
     region: process.env.CDK_DEFAULT_REGION!!,
   },
 });
+
+new FrontendStack(app, 'FrontendStack');

@@ -43,6 +43,7 @@ export class BackendStack extends cdk.Stack {
                     PORT: '3001',
                     TODOS_TABLE: props.tableName,
                     AWS_REGION: this.region,
+                    FRONTEND_URL: 'https://todos.luisruizpavon.com',
                 },
                 logRetention: logs.RetentionDays.ONE_DAY
             }

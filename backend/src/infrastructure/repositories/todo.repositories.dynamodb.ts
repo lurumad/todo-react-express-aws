@@ -1,6 +1,6 @@
 import { Todo } from "@/domain/entities/model";
 import { TodoRepository } from "@/domain/repositories/todo.repository";
-import { DynamoDBClient, PutItemCommand, ScanCommand, GetItemCommand, UpdateItemCommand, DeleteItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, PutItemCommand, UpdateItemCommand, DeleteItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 
 const TABLE_NAME = process.env.TODOS_TABLE;

@@ -1,0 +1,133 @@
+name: Todo Frontend CI/CD
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_to_run:
+        description: "Job to run"
+        required: true
+        default: "deploy"
+        type: choice
+        options:
+          - deploy
+          - destroy
+
+env:
+  AWS_REGION: us-east-1
+  ASSETS_BUCKET_NAME: todos-oacbucket
+
+jobs:
+  deploy:
+    if: ${{ inputs.job_to_run == 'deploy' }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "20.0.0"
+      - name: Install AWS CDK
+        run: |
+          npm install -g aws-cdk
+          cdk --version
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GithubActionsSession
+      - name: Install dependencies
+        run: |
+          cd infra
+          npm install
+      - name: Import Certificates
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          CERTIFICATE: ${{ secrets.CERTIFICATE }}
+          CHAIN: ${{ secrets.CHAIN }}
+        run: |
+          EXISTING_CERT_ARN=$(aws acm list-certificates \
+              --query "CertificateSummaryList[?DomainName=='*.luisruizpavon.com'].CertificateArn" \
+              --output text)
+
+          if [ -z "$EXISTING_CERT_ARN" ]; then
+            echo "Importing certificate..."
+            echo "$PRIVATE_KEY" > private_key.key
+            echo "$CERTIFICATE" > certificate.cer
+            echo "$CHAIN" > chain.cer
+
+            CERTIFICATE_ARN=$(aws acm import-certificate \
+                --certificate fileb://certificate.cer \
+                --private-key fileb://private_key.key \
+                --certificate-chain fileb://chain.cer \
+                --query "CertificateArn" \
+                --output text)
+
+            aws ssm put-parameter \
+                --name "/web/certificateArn" \
+                --value "$CERTIFICATE_ARN" \
+                --type String
+
+            rm -f private_key.key certificate.cer chain.cer
+
+            echo "Certificate imported and stored in SSM Parameter Store."
+          fi
+      - name: CDK Deploy
+        run: |
+          cd infra
+          npx cdk deploy FrontendStack --require-approval never
+      - name: Copy assets
+        run: |
+          aws s3 cp frontend/dist s3://${{ env.ASSETS_BUCKET_NAME }}/ --recursive
+
+  destroy:
+    if: ${{ inputs.job_to_run == 'destroy' }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "20.0.0"
+      - name: Install AWS CDK
+        run: |
+          npm install -g aws-cdk
+          cdk --version
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GithubActionsSession
+      - name: Install dependencies
+        run: |
+          cd infra
+          npm install
+      - name: CDK Destroy
+        run: |
+          cd infra
+          npx cdk destroy FrontendStack --require-approval never --force
+      - name: Remove certificates
+        run: |
+          CERTIFICATE_ARN=$(aws ssm get-parameter \
+              --name "/web/certificateArn" \
+              --query "Parameter.Value" \
+              --output text)
+
+          if [ -n "$CERTIFICATE_ARN" ]; then
+            aws acm delete-certificate \
+                --certificate-arn "$CERTIFICATE_ARN"
+
+            aws ssm delete-parameter \
+                --name "/web/certificateArn"
+
+            echo "Certificate removed."
+          fi

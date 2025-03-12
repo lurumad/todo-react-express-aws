@@ -1,6 +1,5 @@
 import express from "express";
 import request from "supertest";
-import { routerContollersSetup } from "./router.controllers";
 import { routerSetup } from "./router";
 
 describe("routerSetup", async () => {
