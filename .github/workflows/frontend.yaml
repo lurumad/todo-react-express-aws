@@ -122,6 +122,12 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: "20.0.0"
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GithubActionsSession
       - name: Install dependencies
         run: |
           cd frontend
