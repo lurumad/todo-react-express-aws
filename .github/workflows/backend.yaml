@@ -123,7 +123,6 @@ jobs:
                 CDK_DYNAMODB_TABLE_NAME: ${{ env.DYNAMODB_TABLE }}
                 CDK_ECR_IMAGE_TAG: ${{ env.IMAGE_TAG }}
                 CDK_ECR_REPO_NAME: ${{ env.ECR_REPO_NAME }}
-                CDK_SERVICE_NAME: ${{ env.SERVICE_NAME }}
               run: |
                 cd infra
                 npx cdk deploy BackendStack --require-approval never

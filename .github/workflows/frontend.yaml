@@ -15,6 +15,7 @@ on:
 env:
   AWS_REGION: us-east-1
   ASSETS_BUCKET_NAME: todos-oacbucket
+  SERVICE_NAME: Todos
 
 jobs:
   deploy:
@@ -77,6 +78,10 @@ jobs:
             echo "Certificate imported and stored in SSM Parameter Store."
           fi
       - name: CDK Deploy
+        env:
+          CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
+          SERVICE_NAME: ${{ env.SERVICE_NAME }}
         run: |
           cd infra
           npx cdk deploy FrontendStack --require-approval never
