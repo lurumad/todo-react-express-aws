@@ -262,7 +262,7 @@ export class Api extends Construct {
                 greenTargetGroup: greenTG,
                 listener: service.listener,
                 testListener: testListener,
-                terminationWaitTime: cdk.Duration.seconds(30)
+                terminationWaitTime: cdk.Duration.seconds(60)
             },
         });
 
