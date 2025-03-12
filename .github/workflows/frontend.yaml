@@ -22,7 +22,7 @@ env:
 
 jobs:
   deploy:
-    if: ${{ inputs.job_to_run == 'deploy' }}
+    if: ${{ github.event_name == 'push' || inputs.job_to_run == 'deploy' }}
     runs-on: ubuntu-latest
 
     permissions:
