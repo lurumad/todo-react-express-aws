@@ -44,12 +44,8 @@ jobs:
             filters: |
                 backend:
                     - 'backend/**'
-                frontend:
-                    - 'frontend/**'
                 backend-infra:
                     - 'infra/backend/**'
-                frontend-infra:
-                    - 'infra/frontend/**'
                 core-infra:
                     - 'infra/core/**'
     core-infra:

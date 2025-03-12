@@ -12,7 +12,7 @@ on:
         default: "deploy"
         type: choice
         options:
-          - deploy
+          - frontend-infra
           - destroy
 
 env:
@@ -21,8 +21,25 @@ env:
   CDK_SERVICE_NAME: Todos
 
 jobs:
-  deploy:
-    if: ${{ github.event_name == 'push' || inputs.job_to_run == 'deploy' }}
+  changes:
+        runs-on: ubuntu-latest
+        permissions:
+            pull-requests: read
+        outputs:
+            frontend: ${{ steps.filter.outputs.frontend }}
+            frontend-infra: ${{ steps.filter.outputs.frontend-infra }}
+        steps:
+        - uses: actions/checkout@v3
+        - uses: dorny/paths-filter@v3
+          id: filter
+          with:
+            filters: |
+                frontend:
+                    - 'frontend/**'
+                frontend-infra:
+                    - 'infra/frontend/**'
+  frontend-infra:
+    needs: changes
     runs-on: ubuntu-latest
 
     permissions:
@@ -88,6 +105,31 @@ jobs:
         run: |
           cd infra
           npx cdk deploy FrontendStack --require-approval never
+      - name: Copy assets
+        run: |
+          aws s3 cp frontend/dist s3://${{ env.ASSETS_BUCKET_NAME }}/ --recursive
+
+  frontend:
+    needs: changes
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "20.0.0"
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm install
+      - name: Build
+        run: |
+          cd frontend
+          npm run build
       - name: Copy assets
         run: |
           aws s3 cp frontend/dist s3://${{ env.ASSETS_BUCKET_NAME }}/ --recursive
