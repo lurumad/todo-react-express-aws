@@ -34,6 +34,7 @@ export class FrontendStack extends cdk.Stack {
             publicReadAccess: false,
             accessControl: s3.BucketAccessControl.PRIVATE,
             blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+            objectOwnership: s3.ObjectOwnership.OBJECT_WRITER,
             /**
              * The default removal policy is RETAIN, which means that cdk destroy will not attempt to delete
              * the new bucket, and it will remain in your account until manually deleted. By setting the policy to
