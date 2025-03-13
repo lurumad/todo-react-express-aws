@@ -215,7 +215,13 @@ export class Api extends Construct {
     }
 
     private createApiGateway(props: ApiProps, service: ecs_patterns.ApplicationLoadBalancedFargateService) {
-        const api = new apigatewayv2.HttpApi(this, 'TodosApi');
+        const api = new apigatewayv2.HttpApi(this, 'TodosApi', {
+            corsPreflight: {
+                allowHeaders: ['Authorization', 'Content-Type'],
+                allowMethods: [apigatewayv2.CorsHttpMethod.GET, apigatewayv2.CorsHttpMethod.POST, apigatewayv2.CorsHttpMethod.PUT, apigatewayv2.CorsHttpMethod.DELETE],
+                allowOrigins: ['https://todos.luisruizpavon.com'],
+            }
+        });
 
         const vpcLink = api.addVpcLink({
             vpcLinkName: 'TodosVpcLink',
@@ -230,6 +236,8 @@ export class Api extends Construct {
                 vpcLink: vpcLink,
             }),
         });
+
+
     }
 
     private createDeployment(scope: Construct, props: ApiProps, service: ecs_patterns.ApplicationLoadBalancedFargateService) {
