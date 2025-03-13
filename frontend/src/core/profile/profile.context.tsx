@@ -78,7 +78,7 @@ export const useProfile = () => {
 
   if (!context) {
     throw new Error(
-      "To use useProfile you must wrap your component around ProfileProvider"
+      "To use useProfile you must wrap your component around ProfileProvider."
     );
   }
 
