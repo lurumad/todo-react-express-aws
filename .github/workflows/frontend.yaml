@@ -106,9 +106,6 @@ jobs:
         run: |
           cd infra
           npx cdk deploy FrontendStack --require-approval never
-      - name: Copy assets
-        run: |
-          aws s3 cp frontend/dist s3://${{ env.ASSETS_BUCKET_NAME }}/ --recursive
 
   frontend:
     needs: changes
@@ -138,6 +135,9 @@ jobs:
         run: |
           cd frontend
           npm run build
+      - name: Copy assets
+        run: |
+          aws s3 cp frontend/dist s3://${{ env.ASSETS_BUCKET_NAME }}/ --recursive
 
   destroy:
     if: ${{ inputs.job_to_run == 'destroy' }}
