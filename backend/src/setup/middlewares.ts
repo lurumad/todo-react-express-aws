@@ -1,30 +1,21 @@
 import { NotFoundErrorMapper } from "@/infrastructure/error-mappers/NotFoundErrorMapper";
 import bodyParser from "body-parser";
 import { Express, NextFunction, Request, Response } from "express";
-import { User } from "@/domain/entities/model";
 import cors from "cors";
 import { HttpProblemResponse } from "express-http-problem-details";
 import {
-  DefaultMappingStrategy,
   MapperRegistry,
 } from "http-problem-details-mapper";
 import { OAuth2Client } from "google-auth-library";
-
-declare global {
-  namespace Express {
-    interface Request {
-      user: User;
-    }
-  }
-}
+import { TodoMappingStrategy } from "@/infrastructure/TodoMappingStrategy";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-const strategy = new DefaultMappingStrategy(
+const strategy = new TodoMappingStrategy(
   new MapperRegistry().registerMapper(new NotFoundErrorMapper())
 );
 
-export const middlewaresSetup = (app: Express) => {
+export const preMiddlewaresSetup = (app: Express) => {
   app.use(cors({
     origin: process.env.FRONTEND_URL,
     methods: ["GET", "POST", "PUT", "DELETE"],
@@ -33,6 +24,9 @@ export const middlewaresSetup = (app: Express) => {
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(verifyGoogleToken);
+}
+
+export const postMiddlewaresSetup = (app: Express) => {
   app.use(HttpProblemResponse({ strategy }));
 };
 

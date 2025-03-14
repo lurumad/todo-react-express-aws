@@ -11,13 +11,11 @@ export const App = () => {
   return (
     <>
       {import.meta.env.DEV ? (
-        <MockApiProvider>
-          <QueryClientProvider client={queryClient}>
-            <ProfileProvider>
-              <Router />
-            </ProfileProvider>
-          </QueryClientProvider>
-        </MockApiProvider>
+        <QueryClientProvider client={queryClient}>
+          <ProfileProvider>
+            <Router />
+          </ProfileProvider>
+        </QueryClientProvider>
       ) : (
         <QueryClientProvider client={queryClient}>
           <ProfileProvider>

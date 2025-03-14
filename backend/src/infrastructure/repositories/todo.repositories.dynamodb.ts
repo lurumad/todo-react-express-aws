@@ -4,17 +4,23 @@ import { DynamoDBClient, PutItemCommand, UpdateItemCommand, DeleteItemCommand, Q
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 
 const TABLE_NAME = process.env.TODOS_TABLE;
+const IS_LOCAL = process.env.NODE_ENV === "dev";
+const db = new DynamoDBClient({
+    region: IS_LOCAL ? "us-east-1" : process.env.AWS_REGION,
+    endpoint: IS_LOCAL ? "http://localhost:8000" : undefined,
+    credentials: IS_LOCAL
+        ? { accessKeyId: "fakeMyKeyId", secretAccessKey: "fakeSecretAccessKey" }
+        : undefined,
+});
 
 export class DynamoDbTodoRepository implements TodoRepository {
-    private db = new DynamoDBClient({ region: process.env.AWS_REGION });
-
     async add(todo: Todo): Promise<void> {
         const command = new PutItemCommand({
             TableName: TABLE_NAME,
             Item: marshall(todo),
         });
 
-        await this.db.send(command);
+        await db.send(command);
     }
 
     async list(userId: string): Promise<Todo[]> {
@@ -26,17 +32,17 @@ export class DynamoDbTodoRepository implements TodoRepository {
             ExpressionAttributeValues: values,
         });
 
-        const { Items } = await this.db.send(command);
+        const { Items } = await db.send(command);
 
         return Items?.map((item) => unmarshall(item) as Todo) || [];
     }
     async delete(todo: Todo): Promise<void> {
         const command = new DeleteItemCommand({
             TableName: TABLE_NAME,
-            Key: marshall({ id: todo.id }),
+            Key: marshall({ userId: todo.userId, id: todo.id }),
         });
 
-        await this.db.send(command);
+        await db.send(command);
     }
     async get(userId: string, id: string): Promise<Todo | undefined> {
         const filter = "userId = :userId AND id = :id";
@@ -47,7 +53,7 @@ export class DynamoDbTodoRepository implements TodoRepository {
             ExpressionAttributeValues: values,
         });
 
-        const { Items } = await this.db.send(command);
+        const { Items } = await db.send(command);
 
         return Items?.map((item) => unmarshall(item) as Todo)[0];
     }
@@ -55,12 +61,12 @@ export class DynamoDbTodoRepository implements TodoRepository {
     async update(todo: Todo): Promise<void> {
         const command = new UpdateItemCommand({
             TableName: TABLE_NAME,
-            Key: marshall({ id: todo.id }),
+            Key: marshall({ userId: todo.userId, id: todo.id }),
             UpdateExpression: "SET #status = :status",
             ExpressionAttributeNames: { "#status": "status" },
             ExpressionAttributeValues: marshall({ ":status": todo.status }),
         });
 
-        await this.db.send(command);
+        await db.send(command);
     }
 }

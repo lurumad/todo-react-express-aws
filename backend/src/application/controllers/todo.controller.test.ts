@@ -1,5 +1,5 @@
 import { appSetup } from "@/setup/init";
-import { middlewaresSetup } from "@/setup/middlewares";
+import { postMiddlewaresSetup, preMiddlewaresSetup } from "@/setup/middlewares";
 import express from "express";
 import request from "supertest";
 import { todoController } from "./todo.controller";
@@ -7,8 +7,9 @@ import { TodoStatus } from "@/domain/entities/model";
 import { InMemoryTodoRepository } from "@/infrastructure/repositories/todo.repositories.inmemory";
 
 const app = express();
+preMiddlewaresSetup(app);
 appSetup(app);
-middlewaresSetup(app);
+postMiddlewaresSetup(app);
 
 describe("Todo", () => {
   beforeAll(() => {

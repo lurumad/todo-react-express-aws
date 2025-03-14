@@ -16,7 +16,6 @@ export const handlers = [
   }),
   http.post("/todos", async ({ request }) => {
     const todo = (await request.json()) as TodoEntity;
-    console.log(todo);
     todos.push(todo);
     await delay(500);
     return new Response(null, { status: 201 });

@@ -1,0 +1,76 @@
+name: Todo Core CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+        job_to_run:
+            description: "Job to run"
+            required: true
+            default: "deploy"
+            type: choice
+            options:
+            - core-infra
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPO_NAME: todo-backend
+  IMAGE: todo-backend
+  IMAGE_TAG: latest
+  SERVICE_NAME: Todos
+  DYNAMODB_TABLE: Todos
+
+jobs:
+    changes:
+        runs-on: ubuntu-latest
+        permissions:
+            pull-requests: read
+        outputs:
+            core-infra: ${{ steps.filter.outputs.core-infra }}
+        steps:
+        - uses: actions/checkout@v3
+        - uses: dorny/paths-filter@v3
+          id: filter
+          with:
+            filters: |
+                core-infra:
+                    - 'infra/core/**'
+    core-infra:
+        needs: changes
+        if: ${{ needs.changes.outputs.core-infra == 'true' || inputs.job_to_run == 'core-infra' }}
+        name: Deploy Core Infrastructure
+        runs-on: ubuntu-latest
+
+        permissions:
+            id-token: write
+            contents: write
+
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/setup-node@v3
+              with:
+                node-version: "22.14.0"
+            - name: Install AWS CDK
+              run: |
+                npm install -g aws-cdk
+                cdk --version
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                aws-region: ${{ env.AWS_REGION }}
+                role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+                role-session-name: GithubActionsSession
+            - name: Install dependencies
+              run: |
+                cd infra
+                npm install
+            - name: CDK Deploy
+              env:
+                CDK_DEFAULT_ACCOUNT: ${{ secrets.AWS_ACCOUNT_ID }}
+                CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
+                CDK_ECR_REPO_NAME: ${{ env.ECR_REPO_NAME }}
+              run: |
+                cd infra
+                npx cdk deploy CoreStack --require-approval never

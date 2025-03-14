@@ -1,11 +1,11 @@
 import express from "express";
 import request from "supertest";
-import { middlewaresSetup } from "./middlewares";
+import { preMiddlewaresSetup } from "./middlewares";
 
 describe("middlewaresSetup", () => {
   it("parses JSON request bodies", async () => {
     const app = express();
-    middlewaresSetup(app);
+    preMiddlewaresSetup(app);
 
     app.post("/test-json", (req, res) => {
       res.json(req.body);
@@ -20,7 +20,7 @@ describe("middlewaresSetup", () => {
 
   it("parses URL-encoded request bodies", async () => {
     const app = express();
-    middlewaresSetup(app);
+    preMiddlewaresSetup(app);
 
     app.post("/test-urlencoded", (req, res) => {
       res.json(req.body);

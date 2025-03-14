@@ -1,0 +1,22 @@
+services:
+  dynamodb-local:
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
+    image: "amazon/dynamodb-local:latest"
+    container_name: dynamodb-local
+    ports:
+      - "8000:8000"
+    volumes:
+      - "./docker/dynamodb:/home/dynamodblocal/data"
+    working_dir: /home/dynamodblocal
+  init:
+    depends_on:
+      - dynamodb-local
+    image: amazon/aws-cli:latest
+    container_name: app-node
+    ports:
+      - "8080:8080"
+    environment:
+      AWS_ACCESS_KEY_ID: "DUMMYIDEXAMPLE"
+      AWS_SECRET_ACCESS_KEY: "DUMMYEXAMPLEKEY"
+      AWS_REGION: "eu-west-1"
+    command: dynamodb create-table --table-name Todos --attribute-definitions AttributeName=userId,AttributeType=S AttributeName=id,AttributeType=S --key-schema AttributeName=userId,KeyType=HASH AttributeName=id,KeyType=RANGE --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 --endpoint-url http://dynamodb-local:8000
