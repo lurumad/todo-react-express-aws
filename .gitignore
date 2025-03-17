@@ -54,3 +54,5 @@ cert/
 dist/
 
 .qodo
+
+coverage/
