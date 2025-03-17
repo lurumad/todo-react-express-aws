@@ -18,6 +18,10 @@ export class CoreStack extends cdk.Stack {
         });
 
         repo.grantPull(new iam.AccountPrincipal(props.env?.account));
+
+        new cdk.CfnOutput(this, 'TodosEcrRepoName', {
+            value: repo.repositoryName,
+        });
     }
 }
 

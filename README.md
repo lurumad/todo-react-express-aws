@@ -16,6 +16,7 @@ The project has been built using NPM Workspaces to manage the frontend and backe
   - [Technologies](#technologies)
   - [Prerequisites](#prerequisites)
   - [Setup](#setup)
+  - [Infrastructure](#infrastructure)
 
 ## Technologies
 
@@ -94,3 +95,9 @@ npm run dev
 ```
 
 This will start the frontend on port 3000 and the backend on port 3001.
+
+## Infrastructure
+
+To deploy the project I have used AWS CDK (Cloud Development Kit) as infrastructure as code. The infrastructure is defined in the `infra` directory. It leverages on Github Actions to deploy the project to AWS.
+
+![image](docs/Fullstack%20AWS.jpg)

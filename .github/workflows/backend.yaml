@@ -44,8 +44,6 @@ jobs:
                     - 'backend/**'
                 backend-infra:
                     - 'infra/backend/**'
-                core-infra:
-                    - 'infra/core/**'
     backend-infra:
         needs: changes
         if: ${{ needs.changes.outputs.backend-infra == 'true' || inputs.job_to_run == 'backend-infra' }}
